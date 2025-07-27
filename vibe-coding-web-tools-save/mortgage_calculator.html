@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mortgage Repayment Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid #e9ecef;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.95rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid #e9ecef;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+        }
+
+        .summary-card h3 {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 20px;
+        }
+
+        .breakdown-section {
+            margin-top: 30px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .breakdown-section h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .breakdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .savings-highlight {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .scenario-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .scenario-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .remove-scenario {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Mortgage Calculator</h1>
+            <p>Visualize your mortgage payments and see how extra payments can save you money</p>
+        </div>
+        
+        <div class="content">
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="loanAmount">Loan Amount ($)</label>
+                    <input type="number" id="loanAmount" value="300000" min="0" step="1000">
+                </div>
+                
+                <div class="input-group">
+                    <label for="interestRate">Annual Interest Rate (%)</label>
+                    <input type="number" id="interestRate" value="6.5" min="0" max="30" step="0.1">
+                </div>
+                
+                <div class="input-group">
+                    <label for="loanTerm">Loan Term (Years)</label>
+                    <input type="number" id="loanTerm" value="30" min="1" max="50">
+                </div>
+                
+                <div class="input-group">
+                    <label for="extraPayment">Extra Monthly Payment ($)</label>
+                    <input type="number" id="extraPayment" value="0" min="0" step="50">
+                </div>
+                
+                <button class="calculate-btn" onclick="calculateMortgage()">Calculate Payments</button>
+                
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #dee2e6;">
+                    <h3 style="margin-bottom: 15px; color: #2c3e50;">Compare Scenarios</h3>
+                    <button class="calculate-btn" onclick="addScenario()" style="background: linear-gradient(135deg, #27ae60, #2ecc71); margin-bottom: 10px;">Add Current Scenario to Graph</button>
+                    <button class="calculate-btn" onclick="clearScenarios()" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">Clear All Scenarios</button>
+                    <div id="scenarioList" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+            
+            <div class="results-section">
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <h3>Monthly Payment</h3>
+                        <div class="value" id="monthlyPayment">$0</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Total Interest</h3>
+                        <div class="value" id="totalInterest">$0</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Total Repayments</h3>
+                        <div class="value" id="totalRepayments">$0</div>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="paymentChart"></canvas>
+                </div>
+                
+                <div class="breakdown-section" id="breakdownSection" style="display: none;">
+                    <h3>Payment Breakdown</h3>
+                    <div id="breakdownContent"></div>
+                </div>
+                
+                <div class="savings-highlight" id="savingsHighlight" style="display: none;">
+                    <h3>Extra Payment Benefits</h3>
+                    <p id="savingsText"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let paymentChart;
+        let scenarios = [];
+        const colors = [
+            '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', 
+            '#1abc9c', '#e67e22', '#34495e', '#f1c40f', '#95a5a6'
+        ];
+        
+        function calculateMortgage() {
+            const loanAmount = parseFloat(document.getElementById('loanAmount').value);
+            const annualRate = parseFloat(document.getElementById('interestRate').value) / 100;
+            const loanTermYears = parseInt(document.getElementById('loanTerm').value);
+            const extraPayment = parseFloat(document.getElementById('extraPayment').value) || 0;
+            
+            if (!loanAmount || !annualRate || !loanTermYears) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            const monthlyRate = annualRate / 12;
+            const totalPayments = loanTermYears * 12;
+            
+            // Calculate regular monthly payment (principal + interest)
+            const monthlyPayment = (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, totalPayments)) / 
+                                 (Math.pow(1 + monthlyRate, totalPayments) - 1);
+            
+            // Calculate amortization schedule
+            const schedule = calculateAmortizationSchedule(loanAmount, monthlyRate, monthlyPayment, extraPayment);
+            
+            // Calculate totals without extra payments for comparison
+            const regularSchedule = calculateAmortizationSchedule(loanAmount, monthlyRate, monthlyPayment, 0);
+            
+            // Update UI
+            updateResults(monthlyPayment, schedule, regularSchedule, extraPayment);
+            updateChart();
+        }
+        
+        function addScenario() {
+            const loanAmount = parseFloat(document.getElementById('loanAmount').value);
+            const annualRate = parseFloat(document.getElementById('interestRate').value);
+            const loanTermYears = parseInt(document.getElementById('loanTerm').value);
+            const extraPayment = parseFloat(document.getElementById('extraPayment').value) || 0;
+            
+            if (!loanAmount || !annualRate || !loanTermYears) {
+                alert('Please fill in all required fields before adding scenario');
+                return;
+            }
+            
+            const monthlyRate = annualRate / 100 / 12;
+            const monthlyPayment = (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, loanTermYears * 12)) / 
+                                 (Math.pow(1 + monthlyRate, loanTermYears * 12) - 1);
+            const schedule = calculateAmortizationSchedule(loanAmount, monthlyRate, monthlyPayment, extraPayment);
+            
+            const scenario = {
+                id: Date.now(),
+                loanAmount: loanAmount,
+                interestRate: annualRate,
+                loanTerm: loanTermYears,
+                extraPayment: extraPayment,
+                monthlyPayment: monthlyPayment,
+                totalRepayments: schedule.totalPayments,
+                schedule: schedule,
+                color: colors[scenarios.length % colors.length]
+            };
+            
+            scenarios.push(scenario);
+            updateScenarioList();
+            updateChart();
+        }
+        
+        function removeScenario(id) {
+            scenarios = scenarios.filter(s => s.id !== id);
+            updateScenarioList();
+            updateChart();
+        }
+        
+        function clearScenarios() {
+            scenarios = [];
+            updateScenarioList();
+            updateChart();
+        }
+        
+        function updateScenarioList() {
+            const listContainer = document.getElementById('scenarioList');
+            if (scenarios.length === 0) {
+                listContainer.innerHTML = '<p style="color: #6c757d; font-style: italic;">No scenarios added yet</p>';
+                return;
+            }
+            
+            listContainer.innerHTML = scenarios.map(scenario => `
+                <div class="scenario-item">
+                    <div style="display: flex; align-items: center;">
+                        <div class="scenario-color" style="background-color: ${scenario.color};"></div>
+                        <span>
+                            ${scenario.loanAmount.toLocaleString()} @ ${scenario.interestRate}% 
+                            </br>Years: ${scenario.schedule.yearsToPayoff.toFixed(1)}
+                            </br>Rate: ${formatCurrency(scenario.monthlyPayment)}
+                            </br>Extra: ${formatCurrency(scenario.extraPayment)}
+                            </br>Monthly Total: ${formatCurrency(scenario.monthlyPayment + scenario.extraPayment)}
+                            </br>Total: ${formatCurrency(scenario.totalRepayments)}
+                        </span>
+                    </div>
+                    <button class="remove-scenario" onclick="removeScenario(${scenario.id})">Remove</button>
+                </div>
+            `).join('');
+        }
+        
+        function calculateAmortizationSchedule(principal, monthlyRate, monthlyPayment, extraPayment) {
+            let balance = principal;
+            let totalInterest = 0;
+            let totalPrincipal = 0;
+            const schedule = [];
+            let month = 0;
+            
+            while (balance > 0.01 && month < 600) { // Max 50 years to prevent infinite loop
+                month++;
+                const interestPayment = balance * monthlyRate;
+                let principalPayment = monthlyPayment - interestPayment + extraPayment;
+                
+                // Don't overpay
+                if (principalPayment > balance) {
+                    principalPayment = balance;
+                }
+                
+                balance -= principalPayment;
+                totalInterest += interestPayment;
+                totalPrincipal += principalPayment;
+                
+                schedule.push({
+                    month: month,
+                    interestPayment: interestPayment,
+                    principalPayment: principalPayment,
+                    totalPayment: interestPayment + principalPayment,
+                    remainingBalance: Math.max(0, balance),
+                    cumulativeInterest: totalInterest,
+                    cumulativePrincipal: totalPrincipal
+                });
+                
+                if (balance <= 0) break;
+            }
+            
+            return {
+                schedule: schedule,
+                totalInterest: totalInterest,
+                totalPayments: totalInterest + principal,
+                monthsToPayoff: month,
+                yearsToPayoff: month / 12
+            };
+        }
+        
+        function updateResults(monthlyPayment, withExtra, withoutExtra, extraPayment) {
+            document.getElementById('monthlyPayment').textContent = 
+                formatCurrency(monthlyPayment + extraPayment);
+            document.getElementById('totalInterest').textContent = 
+                formatCurrency(withExtra.totalInterest);
+            document.getElementById('totalRepayments').textContent = 
+                formatCurrency(withExtra.totalPayments);
+            
+            // Show breakdown
+            const breakdownSection = document.getElementById('breakdownSection');
+            const breakdownContent = document.getElementById('breakdownContent');
+            
+            breakdownContent.innerHTML = `
+                <div class="breakdown-item">
+                    <span>Regular Monthly Payment:</span>
+                    <span>${formatCurrency(monthlyPayment)}</span>
+                </div>
+                <div class="breakdown-item">
+                    <span>Extra Monthly Payment:</span>
+                    <span>${formatCurrency(extraPayment)}</span>
+                </div>
+                <div class="breakdown-item">
+                    <span>Total Monthly Payment:</span>
+                    <span><strong>${formatCurrency(monthlyPayment + extraPayment)}</strong></span>
+                </div>
+                <div class="breakdown-item">
+                    <span>Payoff Time:</span>
+                    <span>${withExtra.yearsToPayoff.toFixed(1)} years (${withExtra.monthsToPayoff} months)</span>
+                </div>
+            `;
+            
+            breakdownSection.style.display = 'block';
+            
+            // Show savings if extra payments are made
+            if (extraPayment > 0) {
+                const interestSavings = withoutExtra.totalInterest - withExtra.totalInterest;
+                const timeSavings = withoutExtra.monthsToPayoff - withExtra.monthsToPayoff;
+                
+                document.getElementById('savingsText').innerHTML = `
+                    You'll save <strong>${formatCurrency(interestSavings)}</strong> in interest and 
+                    pay off your loan <strong>${timeSavings} months (${(timeSavings/12).toFixed(1)} years)</strong> earlier!
+                `;
+                document.getElementById('savingsHighlight').style.display = 'block';
+            } else {
+                document.getElementById('savingsHighlight').style.display = 'none';
+            }
+        }
+        
+        function updateChart() {
+            const ctx = document.getElementById('paymentChart').getContext('2d');
+            
+            if (paymentChart) {
+                paymentChart.destroy();
+            }
+            
+            // If no scenarios, show current calculation
+            if (scenarios.length === 0) {
+                const loanAmount = parseFloat(document.getElementById('loanAmount').value);
+                const annualRate = parseFloat(document.getElementById('interestRate').value) / 100;
+                const loanTermYears = parseInt(document.getElementById('loanTerm').value);
+                const extraPayment = parseFloat(document.getElementById('extraPayment').value) || 0;
+                
+                if (!loanAmount || !annualRate || !loanTermYears) {
+                    return;
+                }
+                
+                const monthlyRate = annualRate / 12;
+                const monthlyPayment = (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, loanTermYears * 12)) / 
+                                     (Math.pow(1 + monthlyRate, loanTermYears * 12) - 1);
+                const currentSchedule = calculateAmortizationSchedule(loanAmount, monthlyRate, monthlyPayment, extraPayment);
+                
+                const chartData = currentSchedule.schedule.filter((_, index) => index % 12 === 0 || index === currentSchedule.schedule.length - 1);
+                const labels = chartData.map(item => `Year ${Math.ceil(item.month / 12)}`);
+                const balanceData = chartData.map(item => item.remainingBalance);
+                
+                paymentChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Current Scenario',
+                                data: balanceData,
+                                borderColor: '#3498db',
+                                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 2
+                            }
+                        ]
+                    },
+                    options: getChartOptions()
+                });
+                return;
+            }
+            
+            // Show all scenarios
+            const datasets = scenarios.map(scenario => {
+                const chartData = scenario.schedule.schedule.filter((_, index) => index % 12 === 0 || index === scenario.schedule.schedule.length - 1);
+                const balanceData = chartData.map(item => item.remainingBalance);
+                
+                return {
+                    label: `${scenario.loanAmount.toLocaleString()} @ ${scenario.interestRate}%${scenario.extraPayment > 0 ? ` +${scenario.extraPayment}` : ''}`,
+                    data: balanceData,
+                    borderColor: scenario.color,
+                    backgroundColor: scenario.color + '20',
+                    fill: false,
+                    tension: 0.4,
+                    borderWidth: 2
+                };
+            });
+            
+            // Find the longest scenario to set common labels
+            const longestScenario = scenarios.reduce((longest, current) => 
+                current.schedule.schedule.length > longest.schedule.schedule.length ? current : longest
+            );
+            
+            const chartData = longestScenario.schedule.schedule.filter((_, index) => index % 12 === 0 || index === longestScenario.schedule.schedule.length - 1);
+            const labels = chartData.map(item => `Year ${Math.ceil(item.month / 12)}`);
+            
+            paymentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: getChartOptions()
+            });
+        }
+        
+        function getChartOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: scenarios.length > 0 ? 'Mortgage Payment Comparison' : 'Mortgage Payment Progress Over Time',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        }
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return formatCurrency(value);
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            };
+        }
+        
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
+        
+        // Calculate on page load with default values
+        calculateMortgage();
+        updateScenarioList();
+        
+        // Recalculate when inputs change
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', calculateMortgage);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 to Image Converter (JPEG Focus)</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 20px auto;
+        }
+        h1 {
+            text-align: center;
+            color: #5a5a5a;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        textarea {
+            width: 95%; /* Allow some padding */
+            min-height: 150px;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace; /* Good for code/data */
+            resize: vertical; /* Allow vertical resizing */
+        }
+        button {
+            padding: 10px 18px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-right: 10px;
+            transition: background-color 0.2s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #downloadBtn {
+            background-color: #28a745;
+            display: none; /* Hidden initially */
+        }
+        #downloadBtn:hover {
+            background-color: #218838;
+        }
+        #outputContainer {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        #outputImage {
+            display: block; /* Prevents inline spacing issues */
+            max-width: 100%;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            background-color: #eee; /* Placeholder background */
+            min-height: 50px; /* Visible even when empty */
+        }
+        #status {
+            margin-top: 15px;
+            font-style: italic;
+            color: #666;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .info {
+             color: #17a2b8;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Base64 to Image Converter</h1>
+    <p><em>Optimized for Base64 strings starting with /9j/ (JPEG)</em></p>
+
+    <label for="base64Input">Paste Base64 String Here:</label>
+    <textarea id="base64Input" placeholder="Paste your Base64 string here (should start with /9j/...)"></textarea>
+
+    <button id="convertBtn">Convert & Display</button>
+    <button id="downloadBtn">Download Image</button>
+
+    <div id="outputContainer">
+        <h2>Output Image:</h2>
+        <img id="outputImage" src="" alt="Converted Image Output">
+        <p id="status"></p>
+    </div>
+</div>
+
+<script>
+    const base64Input = document.getElementById('base64Input');
+    const convertBtn = document.getElementById('convertBtn');
+    const outputImage = document.getElementById('outputImage');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const statusMsg = document.getElementById('status');
+
+    const JPEG_PREFIX = 'data:image/jpeg;base64,';
+
+    convertBtn.addEventListener('click', () => {
+        let rawBase64String = base64Input.value.trim();
+        statusMsg.textContent = ''; // Clear previous status
+        statusMsg.className = ''; // Clear error/info class
+        outputImage.src = ''; // Clear previous image
+        outputImage.alt = 'Converted Image Output';
+        downloadBtn.style.display = 'none'; // Hide download button initially
+
+        if (!rawBase64String) {
+            statusMsg.textContent = 'Error: Input cannot be empty.';
+            statusMsg.className = 'error';
+            return;
+        }
+
+        let finalBase64String = '';
+
+        // Check if the string starts with /9j/
+        if (rawBase64String.startsWith('/9j/')) {
+            // Prepend the necessary Data URI prefix for JPEG
+            finalBase64String = JPEG_PREFIX + rawBase64String;
+            statusMsg.textContent = 'Detected JPEG signature (/9j/). Prepended Data URI prefix.';
+            statusMsg.className = 'info';
+        } else if (rawBase64String.startsWith('data:image')) {
+             // It already has a prefix, use it as is
+             finalBase64String = rawBase64String;
+             statusMsg.textContent = 'Input already contains a Data URI prefix.';
+             statusMsg.className = 'info';
+        } else {
+            // If it's not starting with /9j/ or a known prefix, it's likely invalid for this purpose
+            statusMsg.textContent = 'Error: Input does not start with /9j/ or a known Data URI prefix (e.g., data:image/...). Cannot process.';
+            statusMsg.className = 'error';
+            return; // Stop processing
+        }
+
+        // Add load/error handlers *before* setting src
+        outputImage.onload = () => {
+            // Append success message to status
+            statusMsg.textContent += ' Image successfully loaded.';
+            downloadBtn.style.display = 'inline-block'; // Show download button
+            outputImage.alt = 'Successfully converted image';
+        };
+
+        outputImage.onerror = () => {
+            statusMsg.textContent = 'Error: Could not load image. The Base64 string might be invalid or corrupted, even after adding the prefix.';
+            statusMsg.className = 'error';
+            outputImage.src = ''; // Clear broken image placeholder
+            outputImage.alt = 'Image conversion failed';
+            downloadBtn.style.display = 'none';
+        };
+
+        // Set the src to trigger loading
+        outputImage.src = finalBase64String;
+    });
+
+    downloadBtn.addEventListener('click', () => {
+        const imageSrc = outputImage.src;
+        if (!imageSrc || !imageSrc.startsWith('data:image')) { // Check if src is a valid data URI
+            statusMsg.textContent = 'Error: No valid image source found to download.';
+            statusMsg.className = 'error';
+            return;
+        }
+
+        // Try to determine file extension from mime type in the src
+        let extension = 'jpg'; // Default to jpg since we expect /9j/
+        const mimeMatch = imageSrc.match(/^data:image\/([a-zA-Z+]+);base64,/);
+        if (mimeMatch && mimeMatch[1]) {
+            const mimeType = mimeMatch[1].toLowerCase();
+             // Handle common types explicitly
+             if (mimeType === 'jpeg' || mimeType === 'jpg') {
+                 extension = 'jpg';
+             } else if (mimeType === 'png') {
+                 extension = 'png';
+             } else if (mimeType === 'gif') {
+                 extension = 'gif';
+             } else if (mimeType === 'webp') {
+                 extension = 'webp';
+             } else if (mimeType === 'svg+xml') {
+                 extension = 'svg';
+             } else {
+                 extension = mimeType; // Use the detected type if not common
+             }
+        }
+
+        const filename = `converted_image.${extension}`;
+
+        // Create a temporary link element
+        const link = document.createElement('a');
+        link.href = imageSrc;
+        link.download = filename;
+
+        // Programmatically click the link to trigger the download
+        document.body.appendChild(link); // Required for Firefox
+        link.click();
+        document.body.removeChild(link); // Clean up
+
+        // Update status without removing potential info message from conversion
+        const currentStatus = statusMsg.textContent;
+        statusMsg.textContent = (currentStatus.includes('Error:') ? '' : currentStatus + ' ') + `Download started as "${filename}".`;
+        statusMsg.className = ''; // Clear error/info class after download initiated
+    });
+
+</script>
+
+</body>
+</html>

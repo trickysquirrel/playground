@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Comparison Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .json-input {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 10px;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .mappings-section {
+            grid-column: span 2;
+            background-color: white;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .mapping-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .mapping-input {
+            flex: 1;
+            padding: 5px;
+        }
+        .date-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        .button-container {
+            text-align: center;
+            margin: 20px 0;
+            grid-column: span 2;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            grid-column: span 2;
+            background-color: white;
+            padding: 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .added { background-color: #e6ffe6; }
+        .removed { background-color: #ffe6e6; }
+        .modified { background-color: #fff3e6; }
+        h3 { margin-top: 0; }
+        .error { color: red; margin-top: 10px; }
+        .help-text {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>JSON Comparison Tool</h1>
+    <div class="container">
+        <div class="mappings-section">
+            <h3>Property Mappings</h3>
+            <p>Define property names that should be treated as equivalent</p>
+            <div id="mappings-container">
+                <div class="mapping-row">
+                    <input type="text" class="mapping-input" placeholder="Property name 1">
+                    <input type="text" class="mapping-input" placeholder="Property name 2">
+                    <div class="date-checkbox">
+                        <input type="checkbox" id="isDate-0">
+                        <label for="isDate-0">Is Date</label>
+                    </div>
+                    <button onclick="removeMappingRow(this)" style="background-color: #ff4444;">Remove</button>
+                </div>
+            </div>
+            <div class="help-text">
+                Check "Is Date" for properties containing dates (supports epoch seconds and ISO format, e.g., "2024-12-04T22:30:00Z")
+            </div>
+            <button onclick="addMappingRow()" style="background-color: #4444ff; margin-top: 10px;">Add Mapping</button>
+        </div>
+        
+        <div>
+            <h3>First JSON</h3>
+            <textarea class="json-input" id="json1" placeholder="Paste your first JSON here..."></textarea>
+        </div>
+        <div>
+            <h3>Second JSON</h3>
+            <textarea class="json-input" id="json2" placeholder="Paste your second JSON here..."></textarea>
+        </div>
+        <div class="button-container">
+            <button onclick="compareJSON()">Compare JSON</button>
+        </div>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        let mappingRowCounter = 1;
+
+        function addMappingRow() {
+            const container = document.getElementById('mappings-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'mapping-row';
+            newRow.innerHTML = `
+                <input type="text" class="mapping-input" placeholder="Property name 1">
+                <input type="text" class="mapping-input" placeholder="Property name 2">
+                <div class="date-checkbox">
+                    <input type="checkbox" id="isDate-${mappingRowCounter}">
+                    <label for="isDate-${mappingRowCounter}">Is Date</label>
+                </div>
+                <button onclick="removeMappingRow(this)" style="background-color: #ff4444;">Remove</button>
+            `;
+            container.appendChild(newRow);
+            mappingRowCounter++;
+        }
+
+        function removeMappingRow(button) {
+            button.parentElement.remove();
+        }
+
+        function getMappings() {
+            const propertyMappings = new Map();
+            const dateMappings = new Set();
+            const rows = document.querySelectorAll('.mapping-row');
+            
+            rows.forEach(row => {
+                const inputs = row.querySelectorAll('input[type="text"]');
+                const isDateCheckbox = row.querySelector('input[type="checkbox"]');
+                const prop1 = inputs[0].value.trim();
+                const prop2 = inputs[1].value.trim();
+                
+                if (prop1 && prop2) {
+                    propertyMappings.set(prop1, prop2);
+                    propertyMappings.set(prop2, prop1);
+                    
+                    if (isDateCheckbox.checked) {
+                        dateMappings.add(prop1);
+                        dateMappings.add(prop2);
+                    }
+                }
+            });
+            
+            return { propertyMappings, dateMappings };
+        }
+
+        function normalizeDate(value) {
+            if (typeof value === 'string') {
+                // Try parsing ISO date string
+                const date = new Date(value);
+                return date.getTime() / 1000; // Convert to epoch seconds
+            } else if (typeof value === 'number') {
+                // Assume it's already in epoch seconds
+                return value;
+            }
+            return value;
+        }
+
+        function findMatchingProperty(obj, propName, propertyMappings) {
+            if (propName in obj) return propName;
+            
+            const mappedName = propertyMappings.get(propName);
+            if (mappedName && mappedName in obj) return mappedName;
+            
+            return null;
+        }
+
+        function compareJSON() {
+            const json1Elem = document.getElementById('json1');
+            const json2Elem = document.getElementById('json2');
+            const resultElem = document.getElementById('result');
+            const { propertyMappings, dateMappings } = getMappings();
+
+            try {
+                const obj1 = JSON.parse(json1Elem.value);
+                const obj2 = JSON.parse(json2Elem.value);
+                
+                const differences = findDifferences(obj1, obj2, propertyMappings, dateMappings);
+                displayDifferences(differences);
+            } catch (error) {
+                resultElem.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        function findDifferences(obj1, obj2, propertyMappings, dateMappings, path = '') {
+            const differences = [];
+            
+            // Check properties in obj1
+            for (const key in obj1) {
+                const matchingKey2 = findMatchingProperty(obj2, key, propertyMappings);
+                const currentPath = path ? `${path}.${key}` : key;
+                
+                if (!matchingKey2) {
+                    differences.push({
+                        path: currentPath,
+                        type: 'removed',
+                        value: obj1[key]
+                    });
+                    continue;
+                }
+
+                if (typeof obj1[key] === 'object' && obj1[key] !== null &&
+                    typeof obj2[matchingKey2] === 'object' && obj2[matchingKey2] !== null) {
+                    differences.push(...findDifferences(obj1[key], obj2[matchingKey2], propertyMappings, dateMappings, currentPath));
+                } else {
+                    let value1 = obj1[key];
+                    let value2 = obj2[matchingKey2];
+
+                    // Normalize dates if this is a date property
+                    if (dateMappings.has(key) || dateMappings.has(matchingKey2)) {
+                        value1 = normalizeDate(value1);
+                        value2 = normalizeDate(value2);
+                    }
+
+                    if (value1 !== value2) {
+                        differences.push({
+                            path: currentPath,
+                            type: 'modified',
+                            oldValue: obj1[key],
+                            newValue: obj2[matchingKey2],
+                            mappedKey: matchingKey2 !== key ? matchingKey2 : null,
+                            isDate: dateMappings.has(key) || dateMappings.has(matchingKey2)
+                        });
+                    }
+                }
+            }
+
+            // Check for new properties in obj2
+            for (const key in obj2) {
+                const matchingKey1 = findMatchingProperty(obj1, key, propertyMappings);
+                const currentPath = path ? `${path}.${key}` : key;
+                
+                if (!matchingKey1) {
+                    differences.push({
+                        path: currentPath,
+                        type: 'added',
+                        value: obj2[key]
+                    });
+                }
+            }
+
+            return differences;
+        }
+
+        function formatDate(value) {
+            if (typeof value === 'number') {
+                return new Date(value * 1000).toISOString() + ` (${value})`;
+            }
+            return value;
+        }
+
+        function displayDifferences(differences) {
+            const resultElem = document.getElementById('result');
+            
+            if (differences.length === 0) {
+                resultElem.innerHTML = '<p>No differences found.</p>';
+                return;
+            }
+
+            let html = '<h3>Differences Found:</h3><ul>';
+            
+            differences.forEach(diff => {
+                let message = '';
+                switch (diff.type) {
+                    case 'added':
+                        message = `<li class="added">Added: ${diff.path} = ${JSON.stringify(diff.value)}</li>`;
+                        break;
+                    case 'removed':
+                        message = `<li class="removed">Removed: ${diff.path} = ${JSON.stringify(diff.value)}</li>`;
+                        break;
+                    case 'modified':
+                        const mappedKeyInfo = diff.mappedKey ? ` (mapped to "${diff.mappedKey}")` : '';
+                        const oldValue = diff.isDate ? formatDate(diff.oldValue) : JSON.stringify(diff.oldValue);
+                        const newValue = diff.isDate ? formatDate(diff.newValue) : JSON.stringify(diff.newValue);
+                        message = `<li class="modified">Modified: ${diff.path}${mappedKeyInfo} from ${oldValue} to ${newValue}</li>`;
+                        break;
+                }
+                html += message;
+            });
+
+            html += '</ul>';
+            resultElem.innerHTML = html;
+        }
+
+        window.onload = function() {
+            // Remove the existing first row
+            const mappingsContainer = document.getElementById('mappings-container');
+            mappingsContainer.innerHTML = '';
+    
+            // Default mappings configuration
+            const defaultMappings = [
+                {
+                    prop1: 'cmid',
+                    prop2: 'cmId',
+                    isDate: false
+                },
+                {
+                    prop1: 'gradeletter',
+                    prop2: 'gradeLetter',
+                    isDate: false
+                },
+                {
+                    prop1: 'submissionstartdate',
+                    prop2: 'submissionStartDate',
+                    isDate: true
+                },
+                {
+                    prop1: 'duedate',
+                    prop2: 'dueDate',
+                    isDate: true
+                },
+                {
+                    prop1: 'duedateoverrides',
+                    prop2: 'dueDateOverride',
+                    isDate: true
+                },
+                {
+                    prop1: 'submissioncutoffdate',
+                    prop2: 'cutoffDate',
+                    isDate: true
+                },
+                {
+                    prop1: 'url',
+                    prop2: 'elmsLink',
+                    isDate: false
+                },
+                {
+                    prop1: 'gradevalue',
+                    prop2: 'grade',
+                    isDate: false
+                },
+                {
+                    prop1: 'gradeformatted',
+                    prop2: 'gradeFormatted',
+                    isDate: false
+                },
+                {
+                    prop1: 'gradetype',
+                    prop2: 'gradeType',
+                    isDate: false
+                },
+                {
+                    prop1: 'grademax',
+                    prop2: 'gradeMax',
+                    isDate: false
+                },
+                {
+                    prop1: 'grademin',
+                    prop2: 'gradeMin',
+                    isDate: false
+                }
+
+            ];
+    
+            // Add a row for each default mapping
+            defaultMappings.forEach((mapping, index) => {
+                const newRow = document.createElement('div');
+                newRow.className = 'mapping-row';
+                newRow.innerHTML = `
+                    <input type="text" class="mapping-input" placeholder="Property name 1" value="${mapping.prop1}">
+                    <input type="text" class="mapping-input" placeholder="Property name 2" value="${mapping.prop2}">
+                    <div class="date-checkbox">
+                        <input type="checkbox" id="isDate-${index}" ${mapping.isDate ? 'checked' : ''}>
+                        <label for="isDate-${index}">Is Date</label>
+                    </div>
+                    <button onclick="removeMappingRow(this)" style="background-color: #ff4444;">Remove</button>
+                `;
+                mappingsContainer.appendChild(newRow);
+            });
+            
+            // Update the counter to account for the default rows
+            mappingRowCounter = defaultMappings.length;
+        };
+    </script>
+</body>
+</html>

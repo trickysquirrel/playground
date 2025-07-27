@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image to Base64 Converter</title>
+  <style>
+    body { font-family: sans-serif; background: #f4f4f4; padding: 20px; color: #333; }
+    .container { background: #fff; max-width: 600px; margin: auto; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    h1 { font-size: 1.5em; margin-bottom: 0.5em; text-align: center; }
+    input, button, textarea { width: 100%; margin-bottom: 10px; font-size: 1em; }
+    textarea { height: 150px; font-family: monospace; resize: vertical; }
+    button { padding: 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Image to Base64 Converter</h1>
+    <input type="file" id="imageInput" accept="image/*">
+    <button id="convertBtn">Convert to Base64</button>
+    <label for="output">Base64 Output (Data URI):</label>
+    <textarea id="output" placeholder="The Base64 Data URI will appear here..." readonly></textarea>
+  </div>
+
+  <script>
+    const imageInput = document.getElementById('imageInput');
+    const convertBtn = document.getElementById('convertBtn');
+    const output = document.getElementById('output');
+
+    convertBtn.addEventListener('click', () => {
+      const file = imageInput.files[0];
+      if (!file) {
+        alert('Please select an image file first.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        output.value = reader.result;
+      };
+      reader.onerror = () => {
+        alert('Error reading the file.');
+      };
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+</html>

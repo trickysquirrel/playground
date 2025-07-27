@@ -1,0 +1,92 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iPhone Screenshot Comparison</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .image-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .image-wrapper {
+            text-align: center;
+        }
+        img {
+            max-width: 320px;
+            max-height: 600px;
+            width: auto;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>iPhone Screenshot Comparison</h1>
+    <div class="image-container" id="imageContainer"></div>
+    <div>
+        <button onclick="changeImages(-1)">Previous</button>
+        <button onclick="changeImages(1)">Next</button>
+    </div>
+    <p id="currentSet"></p>
+
+    <script>
+        const iPhoneModels = ['iPhone 15 Pro', 'iPhone SE (3rd generation) ios15', 'iPhone SE (3rd generation) ios16', 'iPhone SE (3rd generation) ios18'];
+        const totalImages = 41;
+        let currentIndex = 0;
+
+        function updateImages() {
+            const container = document.getElementById('imageContainer');
+            container.innerHTML = '';
+            const paddedIndex = String(currentIndex + 1).padStart(3, '0');
+
+            iPhoneModels.forEach(model => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'image-wrapper';
+                
+                const title = document.createElement('h3');
+                title.textContent = model;
+                wrapper.appendChild(title);
+
+                const img = document.createElement('img');
+                img.src = `${model}-${paddedIndex}.png`; // Changed to .png
+                img.alt = `${model}-${paddedIndex} screenshot`;
+                
+                // Simplified error handling
+                img.onerror = function() {
+                    console.log(`Image not found: ${this.src}`);
+                };
+                
+                wrapper.appendChild(img);
+                container.appendChild(wrapper);
+            });
+
+            document.getElementById('currentSet').textContent = `Viewing set ${currentIndex + 1} of ${totalImages}`;
+        }
+
+        function changeImages(direction) {
+            currentIndex = (currentIndex + direction + totalImages) % totalImages;
+            updateImages();
+        }
+
+        updateImages(); // Initial load
+    </script>
+</body>
+</html>
