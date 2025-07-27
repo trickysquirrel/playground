@@ -12,6 +12,7 @@ Help to generate jira stories for a particular feature.
 - Consider app accessibility when creating the story for iOS and Android platforms.
 - Use the following story template:
 
+```
   Narrative:
     As a...
     I want to...
@@ -30,7 +31,7 @@ Help to generate jira stories for a particular feature.
     Error scenarios:
  Summary of the key UI fields:
   Testing Notes:
-
+```
 
 ## Mobile Story Reviewer
 
@@ -46,4 +47,5 @@ Help to review a story before presenting to the development team.
 ### Example prompts
 
 Can you review this Jira story from an iOS perspective for mobile development?
+
 Can you review this Jira story from an Android perspective for mobile development?
