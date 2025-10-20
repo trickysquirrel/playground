@@ -1,0 +1,53 @@
+# Channel Feature
+
+As a business we would like display a grid of channels.
+
+The view has the title "MiniBox"
+
+The channels can be found in the collection "channels"
+
+When the data is loading display a loading view.
+
+When loading the data errors display the try again view, tapping the button re-loads the data.
+
+The "channels" collection has several documents that each contain the following json structure.
+
+```
+{
+  "etag": "6nE8o",
+  "id": "UC0zg",
+  "brandingSettings": {
+    "channel": {
+        "title": "channel title"
+    },
+    "image": {
+        "bannerExternalUrl" : "https://yt3.googleusercontent.com/L0hsY"
+    }
+  },
+  "snippet": {
+    "title": "title of object",
+    "description": "description of object",
+    "thumbnails": {
+      "default": {
+        "url": "https://yt3.ggpht.com/ytc/AIf8-rj-mo",
+        "width": 88,
+        "height": 88
+      },
+      "medium": {
+        "url": "https://yt3.ggpht.com/ytc/AIf8-rj-mo",
+        "width": 240,
+        "height": 240
+      },
+      "high": {
+        "url": "https://yt3.ggpht.com/ytc/AIf8K-mo",
+        "width": 800,
+        "height": 800
+      }
+    },
+  }
+}
+```
+
+Each channel will be represented by an image using snippet.thumbnails.medium.url of size 240 by 240.  Each channel will also have a title using snipped.title.
+
+On tapping a channel, use the router dependancy to show a view called ChannelDetailView, pass to that view the channel title and firestore document id
