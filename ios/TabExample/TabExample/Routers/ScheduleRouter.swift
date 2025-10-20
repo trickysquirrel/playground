@@ -14,6 +14,7 @@ class ScheduleRouter {
     var navigationPath = NavigationPath()
     var presentedSheet: Sheet? = nil
     var presentedFullScreenCover: Sheet? = nil
+    var navigateToTab: ((AppTab) -> Void)?
     
     enum Route: Hashable {
         case detail

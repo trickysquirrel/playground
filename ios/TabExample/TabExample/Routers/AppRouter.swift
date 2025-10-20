@@ -8,7 +8,6 @@
 import Foundation
 import SwiftUI
 
-// Entry for each tab item
 enum AppTab: Int {
     case schedule = 0
     case map
@@ -26,7 +25,7 @@ class AppRouter {
     var searchRouter = EmptyRouter()
     
     // keeps track of selected tab
-    var selectedTab = AppTab.schedule.rawValue
+    var selectedTab = AppTab.search.rawValue
 
     func navigateTo(tab: AppTab) {
         selectedTab = tab.rawValue

@@ -42,29 +42,33 @@ struct ScheduleView: View {
     
     @Bindable var router: ScheduleRouter
     
+    fileprivate func sectionItem(_ item: ScheduleItem) -> some View {
+        return HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(item.time)
+                .font(.system(.title3, design: .rounded))
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+                .frame(width: 64, alignment: .leading)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(item.title)
+                    .font(.headline)
+                if let notes = item.notes, !notes.isEmpty {
+                    Text(notes)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .padding(.vertical, 6)
+    }
+    
     var body: some View {
         List {
             ForEach(sections) { section in
                 Section(header: Text(section.title)) {
                     ForEach(section.items) { item in
-                        HStack(alignment: .firstTextBaseline, spacing: 12) {
-                            Text(item.time)
-                                .font(.system(.title3, design: .rounded))
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.secondary)
-                                .frame(width: 64, alignment: .leading)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(item.title)
-                                    .font(.headline)
-                                if let notes = item.notes, !notes.isEmpty {
-                                    Text(notes)
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-                        .padding(.vertical, 6)
+                        sectionItem(item)
                         .onTapGesture {
                             router.navigateTo(route: .detail)
                         }
@@ -87,6 +91,11 @@ struct ScheduleView: View {
             ToolbarItem(placement: .topBarLeading) {
                 Button("Block", systemImage: "pencil.circle") {
                     router.presentFullScreenCover(sheet: .info)
+                }
+            }
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Block", systemImage: "map") {
+                    router.navigateToTab?(.map)
                 }
             }
         }
