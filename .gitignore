@@ -1,0 +1,12 @@
+# OSX
+.DS_Store
+
+# Xcode
+ios/FirebaseExample/FirebaseExample/GoogleService-Info.plist
+
+# Additional iOS development files
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+
