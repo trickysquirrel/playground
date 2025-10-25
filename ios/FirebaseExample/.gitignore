@@ -1,0 +1,17 @@
+# OSX
+.DS_Store
+
+# Xcode
+GoogleService-Info.plist
+
+# Additional iOS development files
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+Packages/
+Package.pins
+Package.resolved
+
