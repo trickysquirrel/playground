@@ -52,7 +52,7 @@ final class NewsViewModel: NewsViewModelI {
         case loaded(NewsViewData)
     }
 
-    var state: ViewState = .loading
+    private(set) var state: ViewState = .loading
     private let logic: NewsListenLogicI
     @ObservationIgnored private(set) var streamTask: Task<Void, Never>?
 
