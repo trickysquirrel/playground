@@ -1,3 +1,4 @@
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useNavigation } from '@react-navigation/native';
 import { router } from 'expo-router';
 import { useLayoutEffect } from 'react';
@@ -11,25 +12,35 @@ export default function ScheduleScreen() {
     navigation.setOptions({
       headerShown: true,
       headerLeft: () => (
-        <Pressable
-          style={styles.headerButton}
-          accessibilityRole="button"
-          accessibilityLabel="Open details"
-          onPress={() => router.push('/(tabs)/(schedule)/modal')}
-        >
-          <Text style={styles.headerButtonText}>Modal</Text>
-        </Pressable>
+        <View style={styles.headerLeftGroup}>
+          <Pressable
+            style={[styles.iconButton, styles.headerButton]}
+            accessibilityRole="button"
+            accessibilityLabel="Go to Map tab"
+            onPress={() => router.push('/explore')}
+          >
+            <IconSymbol name="map.fill" size={22} color="#0a84ff" />
+          </Pressable>
+          <Pressable
+            style={styles.headerButton}
+            accessibilityRole="button"
+            accessibilityLabel="Open modal"
+            onPress={() => router.push('/(tabs)/(schedule)/modal')}
+          >
+            <IconSymbol name="info.circle" size={22} color="#0a84ff" />
+          </Pressable>
+        </View>
       ),
       headerRight: () => (
         <Pressable
-          style={styles.headerButton}
+          style={[styles.iconButton, styles.headerButton]}
           accessibilityRole="button"
-          accessibilityLabel="Open details"
+          accessibilityLabel="Open schedule profile"
           onPress={() => router.push('/(tabs)/(schedule)/profile')}
         >
-          <Text style={styles.headerButtonText}>Profile</Text>
+          <IconSymbol name="person.crop.circle" size={22} color="#0a84ff" />
         </Pressable>
-      ),
+      )
     });
   }, [navigation]);
 
@@ -55,9 +66,18 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     marginRight: 8,
   },
+  headerLeftGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 8,
+  },
+  iconButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    marginRight: 4,
+  },
   headerButtonText: {
     color: '#0a84ff',
     fontWeight: '600',
   },
 });
-

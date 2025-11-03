@@ -1,18 +1,9 @@
-import { useNavigation } from '@react-navigation/native';
-import { useLayoutEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-export default function DetailsScreen() {
-  const navigation = useNavigation();
-
-  // Set the header title for this nested screen
-  useLayoutEffect(() => {
-    navigation.setOptions({ title: 'Profile' });
-  }, [navigation]);
-
+export default function ScheduleProfileScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Profile screen (inside Schedule tab)</Text>
+      <Text style={styles.text}>Schedule Profile</Text>
     </View>
   );
 }
